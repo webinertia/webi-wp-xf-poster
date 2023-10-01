@@ -1,0 +1,22 @@
+{
+    "name": "webinertia/webi-xf-bridge",
+    "description": "Wordpress to Xenforo bridge",
+    "type": "library",
+    "license": "BSD-3-Clause",
+    "config": {
+        "vendor-dir": "lib"
+    },
+    "autoload": {
+        "psr-4": {
+            "WebiXfBridge\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Joey Smith",
+            "email": "jsmith@webinertia.net"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
