@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use WebiXfBridge\Bridge;
+use WebiXfBridge\SettingsUi;
 
 /*
  * Plugin Name:       Webinertia Xenforo Bridge
@@ -23,4 +24,8 @@ add_action(
     },
     10,
     3
+);
+add_action(
+    'admin_init',
+    SettingsUi::init(...)
 );

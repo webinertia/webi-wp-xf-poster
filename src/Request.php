@@ -4,22 +4,40 @@ declare(strict_types=1);
 
 namespace WebiXfBridge;
 
+use WebiXfBridge\BridgeInterface;
+use WebiXfBridge\Settings;
 use WebiXfBridge\XfApi;
+
+use function get_option;
 
 final class Request
 {
     public const POST_HEADER_TYPE = 'Content-type: application/x-www-form-urlencoded';
-    private ?string $endPoint;
-    private ?string $domain;
-    private ?string $scheme = 'https';
+    private ?string $apiPath;
+    private ?string $apiUrl;
 
     public function __construct()
     {
 
     }
 
-    public function setEndPoint(string $endPoint): void
+    public function setAPiPath(string $apiPath): void
     {
 
+    }
+
+    public function getApiPath(): string|null
+    {
+        return $this->apiPath;
+    }
+
+    public function setApiUrl(string $apiUrl): void
+    {
+        $this->apiUrl = $apiUrl;
+    }
+
+    public function getApiUrl(): string|null
+    {
+        return $this->apiUrl;
     }
 }
