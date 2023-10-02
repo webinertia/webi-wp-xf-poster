@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace WebiXfBridge;
 
-use WebiXfBridge\Api;
 use WebiXfBridge\BridgeInterface;
 use WebiXfBridge\Settings;
 use WebiXfBridge\Exception\InvalidLogicException;
 use WebiXfBridge\Headers\XFApiKeyHeader;
 use WebiXfBridge\Headers\XFUserHeader;
+use WebiXfBridge\XFApi\Endpoint;
 
 use function array_merge;
 use function did_action;
@@ -44,10 +44,10 @@ class Bridge implements BridgeInterface
             ];
             // set the request state
             $request
-            ->setAPiPath(Api::threads->value)
+            ->setAPiPath(Endpoint::threads->value)
             ->setWpPostId($post->ID)
             ->setHttpMethod(self::HTTP_POST_METHOD) // set method to POST
-            ->setAPiPath(Api::threads->value) // set api path to /api/threads/
+            ->setAPiPath(Endpoint::threads->value) // set api path to /api/threads/
             ->setHeaders($headers)
             ->setBody($body)
             ->makeRequest();
@@ -72,7 +72,7 @@ class Bridge implements BridgeInterface
             }
             // set request state
             $request
-            ->setAPiPath(Api::posts->value . (int) $targetPostId) // /post/
+            ->setAPiPath(Endpoint::posts->value . (int) $targetPostId) // /post/
             ->setWpPostId($post->ID)
             ->setHttpMethod(self::HTTP_POST_METHOD) // set method to POST
             ->setHeaders($headers)

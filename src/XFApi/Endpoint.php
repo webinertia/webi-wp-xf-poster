@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace WebiXfBridge;
+namespace WebiXfBridge\XFApi;
 
-enum Api: string
+enum Endpoint: string
 {
     /**
      * POST method will update the post with passed id
