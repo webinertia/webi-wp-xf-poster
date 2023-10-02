@@ -18,13 +18,21 @@ use WebiXfBridge\SettingsUi;
 require_once plugin_dir_path(__FILE__) . 'lib/autoload.php';
 $bridge = new Bridge();
 add_action(
-    'on_all_status_transitions',
-    function($oldStatus, $newStatus, $post) use($bridge) {
-        $bridge->actionHandler($oldStatus, $newStatus, $post);
+    'transition_post_status',
+    function($old, $new, $post) use($bridge) {
+        $bridge->handleTransition($old, $new, $post);
     },
     10,
     3
 );
+// add_action(
+//     'publish_post',
+//     function($id, $post) use($bridge) {
+//         $bridge->publishHandler($id, $post);
+//     },
+//     10,
+//     2
+// );
 add_action(
     'admin_init',
     SettingsUi::init(...)

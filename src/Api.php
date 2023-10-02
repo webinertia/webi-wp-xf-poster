@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace WebiXfBridge;
 
-enum XfApi: string
+enum Api: string
 {
     /**
      * POST method will update the post with passed id
      * GET method will return information about the post
      * DELETE method deletes the post matching id
      */
-    case Threads = '/api/threads/';
-    case Posts   = '/api/posts/';
+    case threads = '/api/threads/';
+    case posts   = '/api/posts/';
 }

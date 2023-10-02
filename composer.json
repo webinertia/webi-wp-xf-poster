@@ -4,7 +4,7 @@
     "type": "library",
     "license": "BSD-3-Clause",
     "config": {
-        "vendor-dir": "lib"
+        "vendor-dir": "lib/"
     },
     "autoload": {
         "psr-4": {
@@ -16,7 +16,5 @@
             "name": "Joey Smith",
             "email": "jsmith@webinertia.net"
         }
-    ],
-    "minimum-stability": "dev",
-    "require": {}
+    ]
 }

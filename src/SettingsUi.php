@@ -15,6 +15,7 @@ use function register_setting;
 
 final class SettingsUi
 {
+    private const HEADING_TEXT = '<p>Please use the following fields to confige Xenforo Bridge</p>';
     public static function init()
     {
         require_once BridgeInterface::WP_ADMIN_PATH . 'plugin.php';
@@ -72,7 +73,7 @@ final class SettingsUi
 
     public static function buildSectionHeading()
     {
-        echo '<p>Please use the following fields to confige Xenforo Bridge</p>';
+        echo self::HEADING_TEXT;
     }
 
     public static function enableBridgeField()

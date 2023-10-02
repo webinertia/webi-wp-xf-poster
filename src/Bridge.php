@@ -4,69 +4,88 @@ declare(strict_types=1);
 
 namespace WebiXfBridge;
 
-use stdClass;
+use WebiXfBridge\Api;
+use WebiXfBridge\BridgeInterface;
+use WebiXfBridge\Settings;
+use WebiXfBridge\Exception\InvalidLogicException;
+use WebiXfBridge\Headers\XFApiKeyHeader;
+use WebiXfBridge\Headers\XFUserHeader;
 
-class Bridge
+use function array_merge;
+use function did_action;
+use function get_metadata;
+use function get_option;
+use function wp_strip_all_tags;
+
+class Bridge implements BridgeInterface
 {
-    public const POST_META_KEY  = 'webi_xf_post_id';
-    private const ACTION_STATUS = [
-        'new', 'publish',
-    ];
-
-    private ?stdClass $xfThread;
-
-    public function __construct()
-    {
-
+    public function __construct(
+    ) {
     }
 
-    public function actionHandler(string $newStatus, string $oldStatus, object $post): void
+    public function handleTransition($old, $new, $post)
     {
-        switch(current_action()) {
-            case $oldStatus === 'new' && $newStatus === 'publish': // maybe save
-                $this->publishThread($post);
-                break;
-            case $oldStatus === 'publish' && $newStatus === 'publish': // probably edit so update it but check the meta first
-
-                break;
-            case $oldStatus === 'publish' && $newStatus === 'private': // soft delete ie hide thread on xf
-                break;
-            default:
-                // do nothing if we can not determine what is happening
-                break;
+        // DO NOT CHANGE THIS WITHOUT EXTENSIVE TESTING !!!!!!!!!!!!!!!
+        $transCount = did_action('transition_post_status');
+        if ($transCount === 1) {
+            $request = new Request();
+        }
+        // save new condition
+        if ($old === 'publish' && $new === 'auto-draft' && $transCount === 1) { // save new pages
+            $headers = array_merge(
+                ['Content-type' => self::POST_HEADER_TYPE],
+                (new XFUserHeader())->getHeader(),
+                (new XFApiKeyHeader())->getHeader(),
+            );
+            $body = [
+                'node_id' => get_option(Settings::nodeIdSetting->value),
+                'title'   => $post->post_title,
+                'message' => wp_strip_all_tags($post->post_content),
+            ];
+            // set the request state
+            $request
+            ->setAPiPath(Api::threads->value)
+            ->setWpPostId($post->ID)
+            ->setHttpMethod(self::HTTP_POST_METHOD) // set method to POST
+            ->setAPiPath(Api::threads->value) // set api path to /api/threads/
+            ->setHeaders($headers)
+            ->setBody($body)
+            ->makeRequest();
+            return;
+        }
+        // edit condition
+        if ($old === 'publish' && $new === 'publish' && $transCount === 1) {
+           $headers = array_merge(
+                ['Content-type' => self::POST_HEADER_TYPE],
+                (new XFUserHeader())->getHeader(),
+                (new XFApiKeyHeader())->getHeader(),
+            );
+            $body = [
+                'message' => wp_strip_all_tags($post->post_content),
+                'silent'  => false,
+                'author_alert' => true,
+            ];
+            // get the post id from the metadata
+            $targetPostId = get_metadata('post', $post->ID, BridgeInterface::POST_ID_COLUMN, true);
+            if (! $targetPostId) {
+                throw new InvalidLogicException('Post metadata could not be located.');
+            }
+            // set request state
+            $request
+            ->setAPiPath(Api::posts->value . (int) $targetPostId) // /post/
+            ->setWpPostId($post->ID)
+            ->setHttpMethod(self::HTTP_POST_METHOD) // set method to POST
+            ->setHeaders($headers)
+            ->setBody($body)
+            ->makeRequest();
+            return;
         }
     }
 
-    private function publishThread(object $post): void
+    public function updateHandler($post): void
     {
-        $xfUserId = '1';
-        $apiKey   = 'LGoRoI2XnAlyprffIU_wSLnq9Iv5EPwo';
-        $nodeId   = '2';
-        $request  = [
-            'method' => 'POST',
-            'httpversion' => '1.1',
-            'blocking' => true,
-            'headers'  => [
-                'XF-Api-User' => $xfUserId,
-                'XF-Api-Key'  => $apiKey,
-                'Content-type: application/x-www-form-urlencoded',
-            ],
-            'body' => [
-                'node_id' => $nodeId,
-                'title'   => $post->post_title,
-                'message' => wp_strip_all_tags($post->post_content),
-            ],
-        ];
-        // make api request to store data on the xf forum
-        $response = wp_remote_post('http://xf.local/api/threads', $request);
-        // get the thread data from the response body
-        $this->xfThread = (json_decode(wp_remote_retrieve_body($response)))->thread;
-        // save the xf threads first post id so it can be used to edit later
-        update_post_meta($post->ID, self::POST_META_KEY, $this->xfThread->first_post_id);
-    }
-
-    public function editFirstPost()
-    {
-
+        if ($post->post_type !== 'post') {
+            return;
+        }
     }
 }
