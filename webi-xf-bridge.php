@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use WebiXfBridge\Bridge;
+use WebiXfBridge\Settings;
 use WebiXfBridge\SettingsUi;
 
 /*
@@ -15,24 +16,21 @@ use WebiXfBridge\SettingsUi;
  * Author URI:        https://github.com/orgs/webinertia/discussions
  * License:           BSD-3-Clause
  */
+
 require_once plugin_dir_path(__FILE__) . 'lib/autoload.php';
 $bridge = new Bridge();
-add_action(
-    'transition_post_status',
-    function($old, $new, $post) use($bridge) {
-        $bridge->handleTransition($old, $new, $post);
-    },
-    10,
-    3
-);
-// add_action(
-//     'publish_post',
-//     function($id, $post) use($bridge) {
-//         $bridge->publishHandler($id, $post);
-//     },
-//     10,
-//     2
-// );
+$enableBridge = get_option(Settings::enableBridgeSetting->value);
+if ((bool) $enableBridge) {
+    add_action(
+        'transition_post_status',
+        function ($old, $new, $post) use ($bridge) {
+            $bridge->handleTransition($old, $new, $post);
+        },
+        10,
+        3
+    );
+}
+
 add_action(
     'admin_init',
     SettingsUi::init(...)
