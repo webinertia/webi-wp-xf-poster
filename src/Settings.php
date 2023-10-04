@@ -10,6 +10,10 @@ enum Settings: string
 {
     case enableBridgeSetting      = BridgeInterface::PLUGIN_NAMESPACE . 'enable_bridge';
     case enableBridgeSettingsText = 'Enable Xenforo Bridge';
+    case postExcerptSetting       = BridgeInterface::PLUGIN_NAMESPACE . 'post_excerpt';
+    case postExcerptSettingText   = 'If enabled the bridge will only post an excerpt of the article to Xenforo';
+    case targetTagsSetting        = BridgeInterface::PLUGIN_NAMESPACE . 'target_tags';
+    case targetTagsSettingText    = 'These are the allowed html tags that will be converted to Bbcode when posting to Xenforo';
     case apiUrlSetting            = BridgeInterface::PLUGIN_NAMESPACE . 'api_url';
     case apiUrlSettingText        = 'Url to the Xenforo site to bridge with. (5 - 253 characters)';
     case apiKeySetting            = BridgeInterface::PLUGIN_NAMESPACE . 'api_key';

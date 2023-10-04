@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace WebiXfBridge;
+namespace WebiXfBridge\XFApi\Response;
 
-use WebiXfBridge\XFApi\PostResponse;
+use WebiXfBridge\XFApi\Response\PostResponse;
 
-interface XFApiResponseHandlerInterface
+interface ResponseHandlerInterface
 {
     public function handlePostResponse(PostResponse $response, int $wpPostId);
     public function saveMetaData(int $wpPostId, string $column, int $contextId): int|bool;

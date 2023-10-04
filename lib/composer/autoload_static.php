@@ -11,12 +11,20 @@ class ComposerStaticInitbccd24f179b4ea48b546145692aa748f
         array (
             'WebiXfBridge\\' => 13,
         ),
+        'G' => 
+        array (
+            'Genert\\BBCode\\' => 14,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
         'WebiXfBridge\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
+        ),
+        'Genert\\BBCode\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/genert/bbcode/src',
         ),
     );
 

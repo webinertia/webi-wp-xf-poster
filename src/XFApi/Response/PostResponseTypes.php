@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace WebiXfBridge\XFApi;
+namespace WebiXfBridge\XFApi\Response;
 
 enum PostResponseTypes
 {

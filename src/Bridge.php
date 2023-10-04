@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace WebiXfBridge;
 
+use Genert\BBCode\BBCode;
 use WebiXfBridge\BridgeInterface;
+use WebiXfBridge\Formatter;
 use WebiXfBridge\Settings;
 use WebiXfBridge\Exception\InvalidLogicException;
 use WebiXfBridge\Headers\XFApiKeyHeader;
@@ -15,11 +17,13 @@ use function array_merge;
 use function did_action;
 use function get_metadata;
 use function get_option;
+use function strip_tags;
 use function wp_strip_all_tags;
 
 class Bridge implements BridgeInterface
 {
     public function __construct(
+        private $formatter = new Formatter()
     ) {
     }
 
@@ -40,7 +44,7 @@ class Bridge implements BridgeInterface
             $body = [
                 'node_id' => get_option(Settings::nodeIdSetting->value),
                 'title'   => $post->post_title,
-                'message' => wp_strip_all_tags($post->post_content),
+                'message' => $this->formatter->format($post->post_content)
             ];
             // set the request state
             $request

@@ -7,9 +7,9 @@ namespace WebiXfBridge;
 use WebiXfBridge\BridgeInterface;
 use WebiXfBridge\Headers\XFApiKeyHeader;
 use WebiXfBridge\Headers\XFUserHeader;
-use WebiXfBridge\ResponseHandler;
+use WebiXfBridge\XFApi\Response\ResponseHandler;
 use WebiXfBridge\Settings;
-use WebiXfBridge\XFApi\PostResponse;
+use WebiXfBridge\XFApi\Response\PostResponse;
 
 use function get_option;
 use function in_array;

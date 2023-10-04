@@ -7,4 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'WebiXfBridge\\' => array($baseDir . '/src'),
+    'Genert\\BBCode\\' => array($vendorDir . '/genert/bbcode/src'),
 );

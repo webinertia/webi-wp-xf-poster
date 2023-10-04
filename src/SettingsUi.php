@@ -34,7 +34,13 @@ final class SettingsUi
             self::enableBridgeField(...),
             BridgeInterface::TARGET_SECTION,
             BridgeInterface::SETTING_SECTION
-
+        );
+        add_settings_field(
+            Settings::postExcerptSetting->value,
+            Settings::postExcerptSettingText->value,
+            self::postExcerptField(...),
+            BridgeInterface::TARGET_SECTION,
+            BridgeInterface::SETTING_SECTION
         );
         add_settings_field(
             Settings::apiUrlSetting->value,
@@ -47,6 +53,13 @@ final class SettingsUi
             Settings::apiKeySetting->value,
             Settings::apiKeySettingText->value,
             self::apiKeyField(...),
+            BridgeInterface::TARGET_SECTION,
+            BridgeInterface::SETTING_SECTION
+        );
+        add_settings_field(
+            Settings::targetTagsSetting->value,
+            Settings::targetTagsSettingText->value,
+            self::allowedTagsField(...),
             BridgeInterface::TARGET_SECTION,
             BridgeInterface::SETTING_SECTION
         );
@@ -65,8 +78,10 @@ final class SettingsUi
             BridgeInterface::SETTING_SECTION
         );
         register_setting(BridgeInterface::TARGET_SECTION, Settings::enableBridgeSetting->value);
+        register_setting(BridgeInterface::TARGET_SECTION, Settings::postExcerptSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::apiUrlSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::apiKeySetting->value);
+        register_setting(BridgeInterface::TARGET_SECTION, Settings::targetTagsSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::nodeIdSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::xfUserIdSetting->value);
     }
@@ -86,6 +101,16 @@ final class SettingsUi
         . Settings::enableBridgeSettingsText->value;
     }
 
+    public static function postExcerptField()
+    {
+        echo '<input name="'. Settings::postExcerptSetting->value
+        . '" id="'. Settings::postExcerptSetting->value
+        . '" type="checkbox" value="1" class="code" '
+        . checked(1, get_option(Settings::postExcerptSetting->value), false)
+        . ' /> '
+        . Settings::postExcerptSettingText->value;
+    }
+
     public static function apiUrlField()
     {
         echo '<input name="' . Settings::apiUrlSetting->value
@@ -99,6 +124,18 @@ final class SettingsUi
         echo '<input name="' . Settings::apiKeySetting->value
         . '" id="' . Settings::apiKeySetting->value
         . '" value="' . get_option(Settings::apiKeySetting->value) . '"'
+        . '" type="text" minlength="5" maxlength="253" size="50" />';
+    }
+
+    public static function allowedTagsField()
+    {
+        $savedTags = get_option(Settings::targetTagsSetting->value);
+        if (! $savedTags) {
+            $savedTags = implode(',', self::$allowedTags);
+        }
+        echo '<input name="' . Settings::targetTagsSetting->value
+        . '" id="' . Settings::targetTagsSetting->value
+        . '" value="' . $savedTags . '"'
         . '" type="text" minlength="5" maxlength="253" size="50" />';
     }
 

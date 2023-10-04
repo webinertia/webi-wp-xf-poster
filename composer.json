@@ -16,5 +16,8 @@
             "name": "Joey Smith",
             "email": "jsmith@webinertia.net"
         }
-    ]
+    ],
+    "require": {
+        "genert/bbcode": "^1.1"
+    }
 }

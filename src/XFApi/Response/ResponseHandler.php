@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace WebiXfBridge;
+namespace WebiXfBridge\XFApi\Response;
 
 use WebiXfBridge\BridgeInterface;
-use WebiXfBridge\XFApiResponseHandlerInterface;
-use WebiXfBridge\XFApi\PostResponse;
+use WebiXfBridge\XFApi\Response\PostResponse;
 
-final class ResponseHandler implements XFApiResponseHandlerInterface
+final class ResponseHandler implements ResponseHandlerInterface
 {
     public function handlePostResponse(PostResponse $response, $wpPostId)
     {

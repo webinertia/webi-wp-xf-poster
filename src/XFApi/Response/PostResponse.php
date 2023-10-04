@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace WebiXfBridge\XFApi;
+namespace WebiXfBridge\XFApi\Response;
 
 use WebiXfBridge\Exception\InvalidLogicException;
-use WebiXfBridge\XFApi\PostResponeTypes;
-use WebiXfBridge\XFApiResponseInterface;
+use WebiXfBridge\XFApi\Response\PostResponseTypes;
 
 use function json_decode;
 use function wp_remote_retrieve_body;
