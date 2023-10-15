@@ -9,8 +9,10 @@ use WebiXfBridge\Headers\XFApiKeyHeader;
 use WebiXfBridge\Headers\XFUserHeader;
 use WebiXfBridge\XFApi\Response\ResponseHandler;
 use WebiXfBridge\Settings;
+use WebiXfBridge\XFApi\Response\DeleteResponse;
 use WebiXfBridge\XFApi\Response\PostResponse;
 
+use function array_merge;
 use function get_option;
 use function in_array;
 
@@ -44,7 +46,7 @@ final class Request
             'method'      => $this->httpMethod,
             'httpversion' => $this->httpVersion,
             'blocking'    => true,
-            'headers'     => array_merge($this->headers, $headers), // prefer headers passed as method arguments
+            'headers'     => $this->headers, // prefer headers passed as method arguments
             'body'        => array_merge($this->body, $body), // prefer body passed as method arguments
         ];
         $this->apiUrl .= $apiPath ?? $this->apiPath;
@@ -53,10 +55,13 @@ final class Request
             $this->apiUrl,
             $payload
         );
-        // handle the response
-        $postResponse = new PostResponse($response);
+        // handle the responses
         $handler = new ResponseHandler();
-        $handler->handlePostResponse($postResponse, $this->wpPostId);
+        $handled = match ($this->httpMethod) {
+            BridgeInterface::HTTP_POST_METHOD   => $handler->handlePostResponse(new PostResponse($response), $this->wpPostId),
+            BridgeInterface::HTTP_DELETE_METHOD => $handler->handleDeleteResponse(new DeleteResponse($response), $this->wpPostId),
+            default                             => throw new Exception\InvalidLogicException('Unknown Http Method'),
+        };
     }
 
     public function setHttpMethod(string $httpMethod): self
@@ -78,7 +83,6 @@ final class Request
 
     public function setHeaders(array $headers): self
     {
-        // maintain all previous keys, while resetting any incoming keys
         $this->headers = array_merge($this->headers, $headers);
         return $this;
     }
@@ -99,7 +103,7 @@ final class Request
         return $this->nodeId;
     }
 
-    public function setAPiPath(string $apiPath): self
+    public function setApiPath(string $apiPath): self
     {
         $this->apiPath = $apiPath;
         return $this;

@@ -10,12 +10,25 @@ use WebiXfBridge\Settings;
 use function array_merge;
 use function array_unique;
 use function get_option;
+use function get_permalink;
+use function parse_url;
 use function preg_replace;
+use function preg_replace_callback;
+use function explode;
+use function trim;
+use function rawurldecode;
+use function rawurlencode;
+use function strpos;
+use function substr;
+use function strlen;
 use function strip_tags;
 
 final class Formatter
 {
+    private string $scripturl;
     private ?string $formatted;
+    private ?string $imageHeightOption = null;
+    private ?string $imageWidthOption = null;
     public static $targetTags = ['a', 'strong', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img'];
 
     public function __invoke(string $content, array|string $targetTags = null): string
@@ -23,9 +36,12 @@ final class Formatter
         return $this->format($targetTags, $content);
     }
 
-    public function format(string $content, array|string $targetTags = []): string
+    public function format($post, string $content, $isExcerpt = false, array|string $targetTags = []): string
     {
         $bbCode = new BBCode();
+        $this->scripturl  = get_option('siteurl');
+        // add a check for $_POST values
+        // stopped here
         $storedTags = get_option(Settings::targetTagsSetting->value);
         if ($storedTags) {
             $storedTags = explode(',', $storedTags);
@@ -37,16 +53,21 @@ final class Formatter
         }
         $targetTags      = array_unique(array_merge($storedTags, $targetTags));
         // todo: improve this to remove the resulting double breaks
-        $this->formatted = preg_replace('/(\s+){2,}/', "<br>", $content);
-        $this->formatted = $bbCode->convertFromHtml(strip_tags($this->formatted, $targetTags));
+        if (! $isExcerpt) {
+            $this->formatted = preg_replace('/(\s+){2,}/', "<br>", $content);
+            $this->formatted = $bbCode->convertFromHtml(strip_tags($this->formatted, $targetTags));
+            $this->formatted = $this->parseImageTags($this->formatted);
+        } else {
+            $img = $this->parseImageTags($post->post_content, true);
+            $this->formatted = $content . ' ... ' . $this->parseLinkTags('<a href="'.get_permalink($post).'">Read Full Article</a>') . $img;
+        }
 
-        $this->formatted = $this->parseImageTags($this->formatted);
         return $this->formatted;
     }
 
-    private function parseImageTags($text)
+    // credit SMF for main function, with custom changes
+    private function parseImageTags(string $text, $returnTagOnly = false)
     {
-                // I love my own image...
         while (preg_match('~<img\s+([^<>]*)/*>~i', $text, $matches) === 1)
         {
             // Find the position of the image.
@@ -57,23 +78,28 @@ final class Formatter
 
             $params = '';
             $src = '';
-
             $attrs = $this->fetchTagAttributes($matches[1]);
-            foreach ($attrs as $attrib => $value)
-            {
-                if (in_array($attrib, array('width', 'height')))
-                    $params .= ' ' . $attrib . '=' . (int) $value;
-                elseif ($attrib == 'alt' && trim($value) != '')
+
+            // if its not in the markup, but we have values then push them here
+            if (! in_array($attrs, ['width', 'height'])) {
+                $attrs['width']  = $this->imageWidthOption;
+                $attrs['height'] = $this->imageHeightOption;
+            }
+
+            foreach ($attrs as $attrib => $value) {
+                if (in_array($attrib, ['width', 'height'])) {
+                    $params .= ' ' . $attrib . '="' . trim($value) . '"';
+                } elseif ($attrib == 'alt' && trim($value) != '') {
                     $params .= ' alt=' . trim($value);
-                elseif ($attrib == 'src')
+                } elseif ($attrib == 'src') {
                     $src = trim($value);
+                }
             }
 
             $tag = '';
-            if (!empty($src))
-            {
+            if (! empty($src)) {
                 // Attempt to fix the path in case it's not present.
-                if (preg_match('~^https?://~i', $src) === 0 && is_array($parsedURL = parse_iri($scripturl)) && isset($parsedURL['host']))
+                if (preg_match('~^https?://~i', $src) === 0 && is_array($parsedURL = $this->parse_iri($this->scripturl)) && isset($parsedURL['host']))
                 {
                     $baseURL = (isset($parsedURL['scheme']) ? $parsedURL['scheme'] : 'http') . '://' . $parsedURL['host'] . (empty($parsedURL['port']) ? '' : ':' . $parsedURL['port']);
 
@@ -88,11 +114,83 @@ final class Formatter
 
             // Replace the tag
             $text = substr($text, 0, $start_pos) . $tag . substr($text, $end_pos);
+        }
+        if (! $returnTagOnly) {
+            return $text;
+        }
+        return $tag;
+    }
+
+    // credit smf, with changes
+    public function parseLinkTags($text)
+    {
+        	// What about URL's - the pain in the ass of the tag world.
+        while (preg_match('~<a\s+([^<>]*)>([^<>]*)</a>~i', $text, $matches) === 1)
+        {
+            // Find the position of the URL.
+            $start_pos = strpos($text, $matches[0]);
+            if ($start_pos === false)
+                break;
+            $end_pos = $start_pos + strlen($matches[0]);
+
+            $tag_type = 'url';
+            $href = '';
+
+            $attrs = $this->fetchTagAttributes($matches[1]);
+            foreach ($attrs as $attrib => $value)
+            {
+                if ($attrib == 'href')
+                {
+                    $href = trim($value);
+
+                    // Are we dealing with an FTP link?
+                    if (preg_match('~^ftps?://~', $href) === 1)
+                        $tag_type = 'ftp';
+
+                    // Or is this a link to an email address?
+                    elseif (substr($href, 0, 7) == 'mailto:')
+                    {
+                        $tag_type = 'email';
+                        $href = substr($href, 7);
+                    }
+
+                    // No http(s), so attempt to fix this potential relative URL.
+                    elseif (preg_match('~^https?://~i', $href) === 0 && is_array($parsedURL = $this->parse_iri($this->scripturl)) && isset($parsedURL['host']))
+                    {
+                        $baseURL = (isset($parsedURL['scheme']) ? $parsedURL['scheme'] : 'http') . '://' . $parsedURL['host'] . (empty($parsedURL['port']) ? '' : ':' . $parsedURL['port']);
+
+                        if (substr($href, 0, 1) === '/')
+                            $href = $baseURL . $href;
+                        else
+                            $href = $baseURL . (empty($parsedURL['path']) ? '/' : preg_replace('~/(?:index\\.php)?$~', '', $parsedURL['path'])) . '/' . $href;
+                    }
+                }
+
+                // External URL?
+                if ($attrib == 'target' && $tag_type == 'url')
+                {
+                    if (trim($value) == '_blank')
+                        $tag_type == 'iurl';
+                }
+            }
+
+            $tag = '';
+            if ($href != '')
+            {
+                if ($matches[2] == $href)
+                    $tag = '[' . $tag_type . ']' . $href . '[/' . $tag_type . ']';
+                else
+                    $tag = '[' . $tag_type . '=' . $href . ']' . $matches[2] . '[/' . $tag_type . ']';
+            }
+
+            // Replace the tag
+            $text = substr($text, 0, $start_pos) . $tag . substr($text, $end_pos);
             return $text;
         }
     }
 
     /**
+     * smf function
      * Returns an array of attributes associated with a tag.
      *
      * @param string $text A tag
@@ -100,7 +198,7 @@ final class Formatter
      */
     private function fetchTagAttributes($text)
     {
-        $attribs = array();
+        $attribs = [];
         $key = $value = '';
         $tag_state = 0; // 0 = key, 1 = attribute with no string, 2 = attribute with string
         for ($i = 0; $i < strlen($text); $i++)
@@ -149,5 +247,47 @@ final class Formatter
             $attribs[$key] = $value;
 
         return $attribs;
+    }
+    /**
+     * smf function
+     * A wrapper for `parse_url($url)` that can handle URLs with international
+     * characters (a.k.a. IRIs)
+     *
+     * @param string $iri The IRI to parse.
+     * @param int $component Optional parameter to pass to parse_url().
+     * @return mixed Same as parse_url(), but with unmangled Unicode.
+     */
+    private function parse_iri($iri, $component = -1)
+    {
+        $iri = preg_replace_callback(
+            '~[^\x00-\x7F\pZ\pC]|%~u',
+            function($matches)
+            {
+                return rawurlencode($matches[0]);
+            },
+            $iri
+        );
+
+        $parsed = parse_url($iri, $component);
+
+        if (is_array($parsed))
+        {
+            foreach ($parsed as &$part)
+                $part = rawurldecode($part);
+        }
+        elseif (is_string($parsed))
+            $parsed = rawurldecode($parsed);
+
+        return $parsed;
+    }
+
+    public function setImageHeight(string $height): void
+    {
+        $this->imageHeightOption = $height;
+    }
+
+    public function setImageWidth(string $width): void
+    {
+        $this->imageWidthOption = $width;
     }
 }

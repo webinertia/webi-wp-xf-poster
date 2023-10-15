@@ -5,17 +5,24 @@ declare(strict_types=1);
 namespace WebiXfBridge;
 
 use WebiXfBridge\BridgeInterface;
+use WebiXfBridge\Formatter;
 use WebiXfBridge\Settings;
 
+use function add_action;
 use function add_settings_field;
 use function add_settings_section;
 use function checked;
+use function esc_attr;
+use function esc_html__;
 use function get_option;
+use function get_post_meta;
 use function register_setting;
+use function wp_nonce_field;
 
 final class SettingsUi
 {
     private const HEADING_TEXT = '<p>Please use the following fields to confige Xenforo Bridge</p>';
+
     public static function init()
     {
         require_once BridgeInterface::WP_ADMIN_PATH . 'plugin.php';
@@ -36,9 +43,23 @@ final class SettingsUi
             BridgeInterface::SETTING_SECTION
         );
         add_settings_field(
+            Settings::deleteXfThreadSetting->value,
+            Settings::deleteXfThreadSettingText->value,
+            self::deleteXfThreadField(...),
+            BridgeInterface::TARGET_SECTION,
+            BridgeInterface::SETTING_SECTION
+        );
+        add_settings_field(
             Settings::postExcerptSetting->value,
             Settings::postExcerptSettingText->value,
             self::postExcerptField(...),
+            BridgeInterface::TARGET_SECTION,
+            BridgeInterface::SETTING_SECTION
+        );
+        add_settings_field(
+            Settings::excerptWordCountSetting->value,
+            Settings::excerptWordCountSettingText->value,
+            self::excerptWordCountField(...),
             BridgeInterface::TARGET_SECTION,
             BridgeInterface::SETTING_SECTION
         );
@@ -77,13 +98,32 @@ final class SettingsUi
             BridgeInterface::TARGET_SECTION,
             BridgeInterface::SETTING_SECTION
         );
+        add_settings_field(
+            Settings::xfPostImageWidthSetting->value,
+            Settings::xfPostImageWidthSettingText->value,
+            self::xfImageWidthField(...),
+            BridgeInterface::TARGET_SECTION,
+            BridgeInterface::SETTING_SECTION
+        );
+        add_settings_field(
+            Settings::xfPostImageHeightSetting->value,
+            Settings::xfPostImageHeightSettingText->value,
+            self::xfImageHeightField(...),
+            BridgeInterface::TARGET_SECTION,
+            BridgeInterface::SETTING_SECTION
+        );
+        // register settings
         register_setting(BridgeInterface::TARGET_SECTION, Settings::enableBridgeSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::postExcerptSetting->value);
+        register_setting(BridgeInterface::TARGET_SECTION, Settings::deleteXfThreadSetting->value);
+        register_setting(BridgeInterface::TARGET_SECTION, Settings::excerptWordCountSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::apiUrlSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::apiKeySetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::targetTagsSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::nodeIdSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::xfUserIdSetting->value);
+        register_setting(BridgeInterface::TARGET_SECTION, Settings::xfPostImageHeightSetting->value);
+        register_setting(BridgeInterface::TARGET_SECTION, Settings::xfPostImageWidthSetting->value);
     }
 
     public static function buildSectionHeading()
@@ -111,12 +151,30 @@ final class SettingsUi
         . Settings::postExcerptSettingText->value;
     }
 
+    public static function deleteXfThreadField()
+    {
+        echo '<input name="'. Settings::deleteXfThreadSetting->value
+        . '" id="'. Settings::deleteXfThreadSetting->value
+        . '" type="checkbox" value="1" class="code" '
+        . checked(1, get_option(Settings::deleteXfThreadSetting->value), false)
+        . ' /> '
+        . Settings::deleteXfThreadSettingText->value;
+    }
+
+    public static function excerptWordCountField()
+    {
+        echo '<input name="' . Settings::excerptWordCountSetting->value
+        . '" id="' . Settings::excerptWordCountSetting->value
+        . '" value="' . get_option(Settings::excerptWordCountSetting->value) . '"'
+        . '" type="text" minlength="1" maxlength="10" size="10" />';
+    }
+
     public static function apiUrlField()
     {
         echo '<input name="' . Settings::apiUrlSetting->value
         . '" id="' . Settings::apiUrlSetting->value
         . '" value="' . get_option(Settings::apiUrlSetting->value) . '"'
-        . '" type="text" minlength="5" maxlength="253" size="50" />';
+        . '" type="text" minlength="5" maxlength="261" size="50" />';
     }
 
     public static function apiKeyField()
@@ -131,7 +189,7 @@ final class SettingsUi
     {
         $savedTags = get_option(Settings::targetTagsSetting->value);
         if (! $savedTags) {
-            $savedTags = implode(',', self::$allowedTags);
+            $savedTags = implode(',', Formatter::$targetTags);
         }
         echo '<input name="' . Settings::targetTagsSetting->value
         . '" id="' . Settings::targetTagsSetting->value
@@ -153,5 +211,64 @@ final class SettingsUi
         . '" id="' . Settings::xfUserIdSetting->value
         . '" value="' . get_option(Settings::xfUserIdSetting->value) . '"'
         . '" type="text" minlength="1" maxlength="10" size="10" />';
+    }
+
+    public static function xfImageHeightField()
+    {
+        echo '<input name="' . Settings::xfPostImageHeightSetting->value
+        . '" id="' . Settings::xfPostImageHeightSetting->value
+        . '" value="' . get_option(Settings::xfPostImageHeightSetting->value) . '"'
+        . '" type="text" minlength="1" maxlength="10" size="6" />';
+    }
+
+    public static function xfImageWidthField()
+    {
+        echo '<input name="' . Settings::xfPostImageWidthSetting->value
+        . '" id="' . Settings::xfPostImageWidthSetting->value
+        . '" value="' . get_option(Settings::xfPostImageWidthSetting->value) . '"'
+        . '" type="text" minlength="1" maxlength="10" size="6" />';
+    }
+
+    public static function setupPostMetaFields()
+    {
+        add_action('add_meta_boxes_post', static::addPostMetaFields(...));
+    }
+
+    /**
+     *
+     * @param mixed $id
+     * @param mixed $title
+     * @param mixed $callback
+     * @param mixed $page
+     * @param string $context
+     * @param string $priority
+     * @param mixed $callback_args
+     * @return void
+     */
+    public static function addPostMetaFields()
+    {
+        add_meta_box(
+            BridgeInterface::PLUGIN_NAMESPACE . 'bridge_image_sizes',
+            esc_html__('Bridged Post Image Settings', 'webixfbridge'),
+            static::bridgePostMetaImgSettings(...),
+            'post',
+            'side',
+            'default',
+        );
+    }
+
+    public static function bridgePostMetaImgSettings($post)
+    {
+        //wp_nonce_field(BridgeInterface::PLUGIN_NAMESPACE . 'post_meta_nonce', BridgeInterface::SAVE_POST_META);
+        echo '<p>
+        <label for="'. Settings::xfPostImageWidthSetting->value .'">'. Settings::xfPostImageWidthMetadataText->value .'</label>
+        <br />
+        <input class="widefat" type="text" name="'. Settings::xfPostImageWidthSetting->value.'" value="'. esc_attr(get_post_meta($post->ID, Settings::xfPostImageWidthSetting->value, true)) .'" size="6">
+        </p>
+        <p>
+        <label for="'. Settings::xfPostImageHeightSetting->value .'">'. Settings::xfPostImageHeightMetadataText->value .'</label>
+        <br />
+        <input class="widefat" type="text" name="'. Settings::xfPostImageHeightSetting->value.'" value="'. esc_attr(get_post_meta($post->ID, Settings::xfPostImageHeightSetting->value, true)) .'" size="6">
+        </p>';
     }
 }

@@ -7,7 +7,7 @@ namespace WebiXfBridge\XFApi;
 enum Endpoint: string
 {
     /**
-     * POST method will update the post with passed id
+     * POST method will create|update the post with passed id
      * GET method will return information about the post
      * DELETE method deletes the post matching id
      */

@@ -1,7 +1,7 @@
 <?php
 /*
  * Plugin Name:       Webinertia Xenforo Bridge
- * Description: Bridges Wordpress with a configured XenForo forum. This bridge is for sending WP articles to Xenforo via API.
+ * Description:       Bridges Wordpress with a configured XenForo forum. This bridge is for sending WP articles to Xenforo via API.
  * Version:           0.0.1
  * Requires at least: 6.3.1
  * Requires PHP:      8.2.0
@@ -11,24 +11,19 @@
  */
 declare(strict_types=1);
 
-use WebiXfBridge\Bridge;
+use WebiXfBridge\BridgePost;
 use WebiXfBridge\Settings;
 use WebiXfBridge\SettingsUi;
 
 require_once plugin_dir_path(__FILE__) . 'lib/autoload.php';
-$bridge = new Bridge();
+
 $enableBridge = get_option(Settings::enableBridgeSetting->value);
-if ((bool) $enableBridge) {
-    add_action(
-        'transition_post_status',
-        function ($old, $new, $post) use ($bridge) {
-            $bridge->handleTransition($old, $new, $post);
-        },
-        10,
-        3
-    );
+
+if ($enableBridge) {
+    $bridge = new BridgePost(); // currently this is the only type (post type) that we support
 }
-// Admin Settings "write" section
+
+// Admin Settings "write" section, we have to have this or we can not enable the bridge ;)
 add_action(
     'admin_init',
     SettingsUi::init(...)
