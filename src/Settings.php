@@ -14,6 +14,8 @@ enum Settings: string
     case postExcerptSettingText   = 'If enabled the bridge will only post an excerpt of the article to Xenforo.';
     case deleteXfThreadSetting    = BridgeInterface::PLUGIN_NAMESPACE . 'delete_xf_thread_on_delete';
     case deleteXfThreadSettingText = 'If enabled the remote Xenforo thread will be deleted when the local post is moved to trash.';
+    case useFeaturedImageSetting  = BridgeInterface::PLUGIN_NAMESPACE . 'use_featured_image';
+    case useFeaturedImageSettingText = 'If enabled this setting will force the bridge to use the featured image when posting to Xenforo';
     case excerptWordCountSetting  = BridgeInterface::PLUGIN_NAMESPACE . 'post_excerpt_word_count';
     case excerptWordCountSettingText = 'The number of words that should be used to create a fallback length for automatic excerpt creation.';
     case targetTagsSetting        = BridgeInterface::PLUGIN_NAMESPACE . 'target_tags';
