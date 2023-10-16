@@ -2,7 +2,7 @@
 /*
  * Plugin Name:       Webinertia Xenforo Bridge
  * Description:       Bridges Wordpress with a configured XenForo forum. This bridge is for sending WP articles to Xenforo via API.
- * Version:           0.0.1
+ * Version:           1.0.1
  * Requires at least: 6.3.1
  * Requires PHP:      8.2.0
  * Author:            Webinertia
