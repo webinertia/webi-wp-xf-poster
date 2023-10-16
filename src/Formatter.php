@@ -9,6 +9,7 @@ use WebiXfBridge\Settings;
 
 use function array_merge;
 use function array_unique;
+use function get_the_post_thumbnail;
 use function get_option;
 use function get_permalink;
 use function parse_url;
@@ -25,6 +26,8 @@ use function strip_tags;
 
 final class Formatter
 {
+    private bool $useFeatured = false;
+    private ?string $featured;
     private string $scripturl;
     private ?string $formatted;
     private ?string $imageHeightOption = null;
@@ -38,8 +41,10 @@ final class Formatter
 
     public function format($post, string $content, $isExcerpt = false, array|string $targetTags = []): string
     {
-        $bbCode = new BBCode();
-        $this->scripturl  = get_option('siteurl');
+        $bbCode            = new BBCode();
+        $this->useFeatured = (bool) get_option(Settings::useFeaturedImageSetting->value);
+        $this->featured    = get_the_post_thumbnail($post, 'large'); // may need to refactor this
+        $this->scripturl   = get_option('siteurl');
         // add a check for $_POST values
         // stopped here
         $storedTags = get_option(Settings::targetTagsSetting->value);
@@ -51,14 +56,18 @@ final class Formatter
         if ($targetTags !== null && is_string($targetTags)) {
             $targetTags = explode(',', $targetTags);
         }
-        $targetTags      = array_unique(array_merge($storedTags, $targetTags));
-        // todo: improve this to remove the resulting double breaks
+        $targetTags = array_unique(array_merge($storedTags, $targetTags));
         if (! $isExcerpt) {
             $this->formatted = preg_replace('/(\s+){2,}/', "<br>", $content);
             $this->formatted = $bbCode->convertFromHtml(strip_tags($this->formatted, $targetTags));
             $this->formatted = $this->parseImageTags($this->formatted);
         } else {
-            $img = $this->parseImageTags($post->post_content, true);
+            if ($this->useFeatured) {
+                $img = $this->parseImagetags(get_the_post_thumbnail($post->ID, 'large'));
+            } else {
+                $img = $this->parseImageTags($post->post_content, true);
+            }
+
             $this->formatted = $content . ' ... ' . $this->parseLinkTags('<a href="'.get_permalink($post).'">Read Full Article</a>') . $img;
         }
 

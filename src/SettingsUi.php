@@ -50,6 +50,13 @@ final class SettingsUi
             BridgeInterface::SETTING_SECTION
         );
         add_settings_field(
+            Settings::useFeaturedImageSetting->value,
+            Settings::useFeaturedImageSettingText->value,
+            self::useFeaturedImageField(...),
+            BridgeInterface::TARGET_SECTION,
+            BridgeInterface::SETTING_SECTION
+        );
+        add_settings_field(
             Settings::postExcerptSetting->value,
             Settings::postExcerptSettingText->value,
             self::postExcerptField(...),
@@ -116,6 +123,7 @@ final class SettingsUi
         register_setting(BridgeInterface::TARGET_SECTION, Settings::enableBridgeSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::postExcerptSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::deleteXfThreadSetting->value);
+        register_setting(BridgeInterface::TARGET_SECTION, Settings::useFeaturedImageSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::excerptWordCountSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::apiUrlSetting->value);
         register_setting(BridgeInterface::TARGET_SECTION, Settings::apiKeySetting->value);
@@ -159,6 +167,16 @@ final class SettingsUi
         . checked(1, get_option(Settings::deleteXfThreadSetting->value), false)
         . ' /> '
         . Settings::deleteXfThreadSettingText->value;
+    }
+
+    public static function useFeaturedImageField()
+    {
+        echo '<input name="'. Settings::useFeaturedImageSetting->value
+        . '" id="'. Settings::useFeaturedImageSetting->value
+        . '" type="checkbox" value="1" class="code" '
+        . checked(1, get_option(Settings::useFeaturedImageSetting->value), false)
+        . ' /> '
+        . Settings::useFeaturedImageSettingText->value;
     }
 
     public static function excerptWordCountField()
