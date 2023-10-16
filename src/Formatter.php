@@ -67,8 +67,8 @@ final class Formatter
             } else {
                 $img = $this->parseImageTags($post->post_content, true);
             }
-
-            $this->formatted = $content . ' ... ' . $this->parseLinkTags('<a href="'.get_permalink($post).'">Read Full Article</a>') . $img;
+            $this->formatted = $content . " ...\n " . $this->parseLinkTags('<a href="'.get_permalink($post).'">Read Full Article</a>') . "\n $img";
+            $this->formatted = $bbCode->convertFromHtml(strip_tags($this->formatted, $targetTags));
         }
 
         return $this->formatted;

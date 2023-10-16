@@ -37,13 +37,13 @@ final class BridgePost extends AbstractBridge
         $result = match (true) {
             //($transCount === 1 && $oldStatus === 'draft' && $newStatus === 'publish'),
             ($transCount === 1 && $oldStatus === 'publish' && $newStatus === 'publish') => $this->handlePost($post),
-            ($transCount === 1 && $oldStatus === 'publish' && $newStatus === 'trash') => $this->handleDelete($post),
+            ($transCount === 1 && $oldStatus === 'publish' && $newStatus === 'trash')   => $this->handleDelete($post),
             /**
              * old = auto-draft | new = draft   | trans count = 1
              * old = new        | new = inherit | trans count = 2
              * old = draft      | new = draft   | trans count = ? 1
              */
-            default   => $this->initMetaData($post->ID), // this sets the post meta data for the remote thread id and post id to 0 on draft
+            default => $this->initMetaData($post->ID), // this sets the post meta data for the remote thread id and post id to 0 on draft
         };
     }
 
