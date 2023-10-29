@@ -24,7 +24,4 @@ if ($enableBridge) {
 }
 
 // Admin Settings "write" section, we have to have this or we can not enable the bridge ;)
-add_action(
-    'admin_init',
-    SettingsUi::init(...)
-);
+add_action('admin_init', SettingsUi::init(...));
